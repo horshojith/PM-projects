@@ -1,0 +1,260 @@
+import { useState, useRef } from "react";
+import { HeroSection } from "@/components/HeroSection";
+import { ServiceSearch } from "@/components/ServiceSearch";
+import { ServiceCard } from "@/components/ServiceCard";
+import { SubscriptionBanner } from "@/components/SubscriptionBanner";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { Wrench, Zap, Sparkles, Paintbrush, Hammer, Car } from "lucide-react";
+
+interface ServiceProvider {
+  id: string;
+  name: string;
+  category: string;
+  rating: number;
+  reviews: number;
+  distance: string;
+  phone: string;
+  availability: string;
+  price: string;
+}
+
+const Index = () => {
+  const { toast } = useToast();
+  const searchRef = useRef<HTMLDivElement>(null);
+  const [searchResults, setSearchResults] = useState<ServiceProvider[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+
+  const categories = ["Plumber", "Electrician", "Cleaner", "Painter", "Carpenter", "Mechanic"];
+
+  // Mock service providers data
+  const mockProviders: ServiceProvider[] = [
+    {
+      id: "1",
+      name: "Rajesh Kumar",
+      category: "Plumber",
+      rating: 4.8,
+      reviews: 127,
+      distance: "0.8 km",
+      phone: "+91 98765 43210",
+      availability: "Available now",
+      price: "₹300/hour"
+    },
+    {
+      id: "2", 
+      name: "Amit Electrical Services",
+      category: "Electrician",
+      rating: 4.9,
+      reviews: 89,
+      distance: "1.2 km", 
+      phone: "+91 98765 43211",
+      availability: "Available in 30 mins",
+      price: "₹400/hour"
+    },
+    {
+      id: "3",
+      name: "Clean Pro Services",
+      category: "Cleaner",
+      rating: 4.7,
+      reviews: 156,
+      distance: "0.5 km",
+      phone: "+91 98765 43212", 
+      availability: "Available now",
+      price: "₹250/hour"
+    },
+    {
+      id: "4",
+      name: "Color Magic Painters",
+      category: "Painter", 
+      rating: 4.6,
+      reviews: 73,
+      distance: "2.1 km",
+      phone: "+91 98765 43213",
+      availability: "Available tomorrow",
+      price: "₹350/hour"
+    },
+    {
+      id: "5",
+      name: "Wood Master Carpenter",
+      category: "Carpenter",
+      rating: 4.8,
+      reviews: 94,
+      distance: "1.8 km",
+      phone: "+91 98765 43214",
+      availability: "Available in 2 hours", 
+      price: "₹450/hour"
+    },
+    {
+      id: "6",
+      name: "Auto Fix Mechanics",
+      category: "Mechanic",
+      rating: 4.5,
+      reviews: 112,
+      distance: "1.5 km",
+      phone: "+91 98765 43215",
+      availability: "Available now",
+      price: "₹500/hour"
+    }
+  ];
+
+  const handleGetStarted = () => {
+    searchRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleSearch = (query: string, category: string, location: string) => {
+    setIsSearching(true);
+    setHasSearched(true);
+
+    // Simulate API call
+    setTimeout(() => {
+      let results = mockProviders;
+      
+      if (category) {
+        results = results.filter(provider => 
+          provider.category.toLowerCase() === category.toLowerCase()
+        );
+      }
+      
+      if (query) {
+        results = results.filter(provider =>
+          provider.name.toLowerCase().includes(query.toLowerCase()) ||
+          provider.category.toLowerCase().includes(query.toLowerCase())
+        );
+      }
+
+      setSearchResults(results);
+      setIsSearching(false);
+
+      if (results.length === 0) {
+        toast({
+          title: "No services found",
+          description: "Try adjusting your search criteria or location.",
+        });
+      } else {
+        toast({
+          title: "Services found!",
+          description: `Found ${results.length} service providers near you.`,
+        });
+      }
+    }, 1500);
+  };
+
+  const handleContactProvider = (provider: ServiceProvider) => {
+    if (!isSubscribed) {
+      toast({
+        title: "Premium feature",
+        description: "Subscribe to our premium plan to contact service providers directly.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Contact information",
+      description: `You can reach ${provider.name} at ${provider.phone}`,
+    });
+  };
+
+  const handleSubscribe = () => {
+    // This would integrate with Stripe or payment gateway
+    toast({
+      title: "Subscription activated!",
+      description: "Welcome to premium! You can now contact all service providers.",
+    });
+    setIsSubscribed(true);
+  };
+
+  const CategoryIcon = ({ category }: { category: string }) => {
+    const icons = {
+      plumber: Wrench,
+      electrician: Zap,
+      cleaner: Sparkles,
+      painter: Paintbrush,
+      carpenter: Hammer,
+      mechanic: Car
+    };
+    const Icon = icons[category.toLowerCase() as keyof typeof icons] || Wrench;
+    return <Icon className="w-6 h-6" />;
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Hero Section */}
+      <div className="container mx-auto px-4 py-8">
+        <HeroSection onGetStarted={handleGetStarted} />
+      </div>
+
+      {/* Search Section */}
+      <div ref={searchRef} className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto space-y-8">
+          {/* Subscription Banner */}
+          <SubscriptionBanner 
+            isSubscribed={isSubscribed}
+            onSubscribe={handleSubscribe}
+          />
+
+          {/* Service Search */}
+          <ServiceSearch 
+            onSearch={handleSearch}
+            categories={categories}
+          />
+
+          {/* Quick Service Categories */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {categories.map((category) => (
+              <Button
+                key={category}
+                variant="outline"
+                className="h-20 flex flex-col items-center space-y-2 hover:border-primary hover:bg-primary/5 transition-all group"
+                onClick={() => handleSearch("", category, "")}
+              >
+                <CategoryIcon category={category} />
+                <span className="text-xs font-medium group-hover:text-primary">{category}</span>
+              </Button>
+            ))}
+          </div>
+
+          {/* Search Results */}
+          {hasSearched && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-foreground">
+                  {isSearching ? "Searching..." : `Found ${searchResults.length} services`}
+                </h2>
+                {searchResults.length > 0 && (
+                  <span className="text-sm text-muted-foreground">
+                    Sorted by distance and rating
+                  </span>
+                )}
+              </div>
+
+              {isSearching ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="animate-pulse">
+                      <div className="bg-muted rounded-lg h-48"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {searchResults.map((provider) => (
+                    <ServiceCard
+                      key={provider.id}
+                      provider={provider}
+                      onContact={handleContactProvider}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Index;
