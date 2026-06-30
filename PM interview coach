@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PM Interview Coach</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --border: #2a2a2a;
+    --border-active: #444;
+    --text: #e8e8e8;
+    --muted: #666;
+    --accent: #7fff6e;
+    --accent-dim: rgba(127,255,110,0.08);
+    --accent-border: rgba(127,255,110,0.25);
+    --warn: #ff6b6b;
+    --hint-bg: rgba(255,198,80,0.06);
+    --hint-border: rgba(255,198,80,0.22);
+    --hint-color: #ffc650;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Inter', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+    padding: 40px 20px 80px;
+  }
+
+  .shell {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  /* ── Session tracker ── */
+  .session-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 18px;
+    margin-bottom: 28px;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .session-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .session-stats {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .stat-value {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .stat-value.neutral { color: var(--text); }
+
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .session-dots {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+  }
+
+  .dot.filled {
+    background: var(--accent);
+    opacity: 0.7;
+  }
+
+  .dot.filled.high { opacity: 1; }
+  .dot.filled.low { background: var(--warn); opacity: 0.7; }
+
+  /* ── Header ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 24px;
+    margin-bottom: 28px;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    color: #fff;
+  }
+
+  h1 span {
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  /* ── Step labels ── */
+  .step-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  /* ── Section ── */
+  .section {
+    margin-bottom: 28px;
+  }
+
+  /* ── Dropdown ── */
+  .select-wrap {
+    position: relative;
+  }
+
+  select {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    padding: 12px 40px 12px 14px;
+    border-radius: 6px;
+    appearance: none;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  select:focus, select:hover { border-color: var(--border-active); }
+
+  .select-arrow {
+    pointer-events: none;
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 10px;
+  }
+
+  /* ── Question card ── */
+  .question-card {
+    background: var(--accent-dim);
+    border: 1px solid var(--accent-border);
+    border-radius: 8px;
+    padding: 16px 18px;
+    display: none;
+  }
+
+  .question-card.visible { display: block; }
+
+  .q-type {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  .q-text {
+    color: #fff;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.5;
+  }
+
+  /* ── Framework hint ── */
+  .hint-card {
+    display: none;
+    background: var(--hint-bg);
+    border: 1px solid var(--hint-border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 12px;
+  }
+
+  .hint-card.visible { display: block; }
+
+  .hint-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--hint-border);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .hint-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .hint-icon { font-size: 12px; }
+
+  .hint-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--hint-color);
+  }
+
+  .hint-chevron {
+    font-size: 10px;
+    color: var(--hint-color);
+    transition: transform 0.2s;
+  }
+
+  .hint-chevron.open { transform: rotate(180deg); }
+
+  .hint-body {
+    padding: 12px 14px;
+    display: none;
+  }
+
+  .hint-body.open { display: block; }
+
+  .hint-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .hint-step {
+    background: rgba(255,198,80,0.1);
+    border: 1px solid rgba(255,198,80,0.2);
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 12px;
+    color: var(--hint-color);
+    font-family: var(--mono);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .hint-step-num {
+    font-size: 10px;
+    opacity: 0.6;
+  }
+
+  /* ── Textarea ── */
+  textarea {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.65;
+    padding: 14px;
+    resize: vertical;
+    min-height: 160px;
+    outline: none;
+    transition: border-color 0.15s;
+    display: none;
+  }
+
+  textarea.visible { display: block; }
+  textarea:focus { border-color: var(--border-active); }
+  textarea::placeholder { color: var(--muted); }
+
+  /* ── Buttons ── */
+  .btn-row {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+
+  .btn-row.visible { display: flex; }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #0d0d0d;
+    border: none;
+    border-radius: 6px;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 11px 22px;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    letter-spacing: 0.01em;
+  }
+
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px 18px;
+    cursor: pointer;
+    transition: border-color 0.15s, opacity 0.15s;
+    display: none;
+  }
+
+  .btn-secondary.visible { display: inline-block; }
+  .btn-secondary:hover { border-color: var(--border-active); }
+
+  /* ── Spinner ── */
+  .spinner {
+    display: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(0,0,0,0.2);
+    border-top-color: #000;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-left: 6px;
+  }
+
+  .spinner.active { display: inline-block; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Feedback panel ── */
+  #feedback {
+    display: none;
+    margin-top: 36px;
+    border-top: 1px solid var(--border);
+    padding-top: 28px;
+  }
+
+  #feedback.visible { display: block; }
+
+  .feedback-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .feedback-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .score-badge {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    padding: 5px 16px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .score-badge .score-num {
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .fb-block {
+    margin-bottom: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .fb-block-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .fb-icon { font-size: 14px; line-height: 1; }
+
+  .fb-block-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .fb-block-body {
+    padding: 14px 16px;
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .fb-block-body ul { padding-left: 18px; }
+  .fb-block-body li { margin-bottom: 5px; }
+  .fb-block-body p + p { margin-top: 8px; }
+
+  .block-well .fb-block-header { border-color: rgba(127,255,110,0.15); }
+  .block-well { border-color: rgba(127,255,110,0.2); }
+
+  .block-missing .fb-block-header { border-color: rgba(255,107,107,0.15); }
+  .block-missing { border-color: rgba(255,107,107,0.2); }
+
+  /* ── Try again area ── */
+  .try-again-row {
+    display: none;
+    margin-top: 8px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .try-again-row.visible { display: flex; }
+
+  .try-again-hint {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  /* ── API key gate ── */
+  .key-gate {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 28px;
+  }
+
+  .key-gate-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+
+  .key-gate-sub {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 14px;
+    line-height: 1.5;
+  }
+
+  .key-gate-sub a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  .key-gate-sub a:hover { text-decoration: underline; }
+
+  .key-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .key-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.15s;
+    min-width: 0;
+  }
+
+  .key-input:focus { border-color: var(--border-active); }
+  .key-input::placeholder { color: var(--muted); }
+
+  .key-submit {
+    background: var(--accent);
+    color: #0d0d0d;
+    border: none;
+    border-radius: 6px;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 18px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+  }
+
+  .key-submit:hover { opacity: 0.88; }
+
+  .key-status {
+    margin-top: 10px;
+    font-family: var(--mono);
+    font-size: 12px;
+    display: none;
+  }
+
+  .key-status.ok  { display: block; color: var(--accent); }
+  .key-status.err { display: block; color: var(--warn); }
+
+  .key-set-row {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .key-set-row.visible { display: flex; }
+
+  .key-set-label {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .key-change {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .key-change:hover { border-color: var(--border-active); color: var(--text); }
+
+  /* main content hidden until key is set */
+  #main-content {
+    display: none;
+  }
+
+  #main-content.unlocked { display: block; }
+
+  /* ── Error ── */
+  .error-msg {
+    display: none;
+    margin-top: 12px;
+    color: var(--warn);
+    font-size: 13px;
+    font-family: var(--mono);
+  }
+
+  .error-msg.visible { display: block; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header>
+    <div class="eyebrow">Interview Prep</div>
+    <h1>PM Interview Coach <span>/ AI Feedback</span></h1>
+  </header>
+
+  <!-- API Key gate -->
+  <div class="key-gate" id="key-gate">
+    <div class="key-gate-title">Enter your Groq API key to start</div>
+    <div class="key-gate-sub">
+      Your key is used only in this browser tab and never sent anywhere except directly to Groq.
+      Get a free key at <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a>.
+    </div>
+    <div id="key-entry-area">
+      <div class="key-input-row">
+        <input class="key-input" id="key-input" type="password" placeholder="gsk_…" autocomplete="off" spellcheck="false" />
+        <button class="key-submit" id="key-submit">Confirm</button>
+      </div>
+      <div class="key-status" id="key-status"></div>
+    </div>
+    <div class="key-set-row" id="key-set-row">
+      <span class="key-set-label">✓ API key set for this session</span>
+      <button class="key-change" id="key-change">Change key</button>
+    </div>
+  </div>
+
+  <div id="main-content">
+
+  <!-- Session tracker -->
+  <div class="session-bar">
+    <div class="session-label">Session</div>
+    <div class="session-stats">
+      <div class="stat">
+        <div class="stat-value neutral" id="stat-attempts">0</div>
+        <div class="stat-label">Attempts</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="stat-avg">—</div>
+        <div class="stat-label">Avg Score</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="stat-best">—</div>
+        <div class="stat-label">Best</div>
+      </div>
+    </div>
+    <div class="session-dots" id="session-dots"></div>
+  </div>
+
+  <!-- Step 1: Question type -->
+  <div class="section">
+    <div class="step-label">Step 1 — Question type</div>
+    <div class="select-wrap">
+      <select id="qtype">
+        <option value="">Select a question type…</option>
+        <option value="product_design">Product Design</option>
+        <option value="product_improvement">Product Improvement</option>
+        <option value="metrics">Metrics</option>
+        <option value="estimation">Estimation</option>
+        <option value="behavioural">Behavioural</option>
+      </select>
+      <span class="select-arrow">▾</span>
+    </div>
+  </div>
+
+  <!-- Step 2: Question + framework hint -->
+  <div class="section">
+    <div class="step-label">Step 2 — Your question</div>
+    <div class="question-card" id="question-card">
+      <div class="q-type" id="q-type-label"></div>
+      <div class="q-text" id="q-text"></div>
+    </div>
+    <div class="hint-card" id="hint-card">
+      <div class="hint-header" id="hint-toggle">
+        <div class="hint-header-left">
+          <span class="hint-icon">💡</span>
+          <span class="hint-title">Answer framework hint</span>
+        </div>
+        <span class="hint-chevron" id="hint-chevron">▾</span>
+      </div>
+      <div class="hint-body" id="hint-body">
+        <div class="hint-steps" id="hint-steps"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3: Answer -->
+  <div class="section">
+    <div class="step-label">Step 3 — Your answer</div>
+    <textarea id="answer" placeholder="Write your full answer here. Think out loud — structure it the way you would in a real interview."></textarea>
+    <div class="btn-row" id="btn-row">
+      <button class="btn-primary" id="submit">
+        Get Feedback
+        <span class="spinner" id="spinner"></span>
+      </button>
+    </div>
+    <div class="error-msg" id="error-msg"></div>
+  </div>
+
+  <!-- Feedback -->
+  <div id="feedback">
+    <div class="feedback-header">
+      <div class="feedback-title">Feedback</div>
+      <div class="score-badge">Score: <span class="score-num" id="score-display">—</span> / 10</div>
+    </div>
+
+    <div class="fb-block block-well">
+      <div class="fb-block-header">
+        <span class="fb-icon">✓</span>
+        <span class="fb-block-title">What you did well</span>
+      </div>
+      <div class="fb-block-body" id="fb-well"></div>
+    </div>
+
+    <div class="fb-block block-missing">
+      <div class="fb-block-header">
+        <span class="fb-icon">△</span>
+        <span class="fb-block-title">What was missing</span>
+      </div>
+      <div class="fb-block-body" id="fb-missing"></div>
+    </div>
+
+    <div class="fb-block">
+      <div class="fb-block-header">
+        <span class="fb-icon">★</span>
+        <span class="fb-block-title">How a top PM would have answered</span>
+      </div>
+      <div class="fb-block-body" id="fb-ideal"></div>
+    </div>
+
+    <!-- Try again -->
+    <div class="try-again-row" id="try-again-row">
+      <span class="try-again-hint">Same question, better answer?</span>
+      <button class="btn-secondary visible" id="try-again">↺ Try again</button>
+    </div>
+  </div>
+
+  </div><!-- /main-content -->
+</div>
+
+<script>
+  // ── API key — stored in memory only, never persisted ──
+  let GROQ_API_KEY = null;
+
+  // Key gate elements
+  const keyInput    = document.getElementById("key-input");
+  const keySubmit   = document.getElementById("key-submit");
+  const keyStatus   = document.getElementById("key-status");
+  const keyEntryArea = document.getElementById("key-entry-area");
+  const keySetRow   = document.getElementById("key-set-row");
+  const keyChangeBtn = document.getElementById("key-change");
+  const mainContent = document.getElementById("main-content");
+
+  function activateKey(k) {
+    GROQ_API_KEY = k;
+    keyEntryArea.style.display = "none";
+    keySetRow.classList.add("visible");
+    mainContent.classList.add("unlocked");
+  }
+
+  function deactivateKey() {
+    GROQ_API_KEY = null;
+    keyInput.value = "";
+    keyStatus.className = "key-status";
+    keyEntryArea.style.display = "";
+    keySetRow.classList.remove("visible");
+    mainContent.classList.remove("unlocked");
+    keyInput.focus();
+  }
+
+  keySubmit.addEventListener("click", () => {
+    const val = keyInput.value.trim();
+    if (!val) {
+      keyStatus.textContent = "Paste your Groq API key first.";
+      keyStatus.className = "key-status err";
+      return;
+    }
+    if (!val.startsWith("gsk_")) {
+      keyStatus.textContent = "That doesn't look like a Groq key (should start with gsk_).";
+      keyStatus.className = "key-status err";
+      return;
+    }
+    activateKey(val);
+  });
+
+  keyInput.addEventListener("keydown", e => {
+    if (e.key === "Enter") keySubmit.click();
+  });
+
+  keyChangeBtn.addEventListener("click", deactivateKey);
+
+  const questions = {
+    product_design: {
+      label: "Product Design",
+      framework: ["Clarify goals & scope", "Define user segments", "Identify pain points", "Brainstorm solutions", "Prioritise & pick one", "Define success metrics"],
+      pool: [
+        "Design a product to help elderly people living alone stay safe and connected with their families.",
+        "Design a product that helps college students in India manage their personal finances for the first time.",
+        "Design a commute experience for someone who travels 90 minutes each way to work every day.",
+        "Design a product to help first-time managers become better at giving feedback to their team.",
+        "Design a tool that helps freelancers in India find consistent, well-paying work."
+      ]
+    },
+    product_improvement: {
+      label: "Product Improvement",
+      framework: ["Clarify the goal", "User segments", "Pain points per segment", "Prioritise one segment", "Solutions", "Tradeoffs", "Success metrics"],
+      pool: [
+        "How would you improve YouTube's homepage experience for a user who opens it knowing exactly what they want to watch?",
+        "How would you improve LinkedIn's job search experience for a mid-career professional switching industries?",
+        "How would you improve Spotify's podcast discovery for a user who has never listened to a podcast before?",
+        "How would you improve Google Maps for users who are exploring a new city on foot?",
+        "How would you improve Swiggy's post-order experience — everything that happens after the user places an order?"
+      ]
+    },
+    metrics: {
+      label: "Metrics",
+      framework: ["State the goal", "North Star metric", "Input metrics", "Counter-metrics", "Guardrail metrics", "How you'd instrument"],
+      pool: [
+        "You're the PM for Instagram Reels. How would you know if the feature is succeeding? Walk me through the metrics you'd track and why.",
+        "You just launched a new onboarding flow for a B2B SaaS product. How do you measure if it's working?",
+        "You're the PM for WhatsApp Status. How do you define and measure success for that feature?",
+        "You've shipped a new AI-powered search feature on an e-commerce app. What metrics would tell you it's a win?",
+        "You're the PM for Zomato's loyalty programme. How do you measure whether it's actually driving retention?"
+      ]
+    },
+    estimation: {
+      label: "Estimation",
+      framework: ["State assumptions", "Break into segments", "Estimate each segment", "Sanity-check the total", "State your answer clearly"],
+      pool: [
+        "Estimate how many Uber rides happen in Bengaluru on a typical weekday.",
+        "Estimate how much storage Google Photos needs to add each day globally.",
+        "Estimate the number of WhatsApp messages sent in India every hour.",
+        "Estimate the revenue Zomato makes in Mumbai on a typical Saturday.",
+        "Estimate how many people in India buy a smartphone for the first time each month."
+      ]
+    },
+    behavioural: {
+      label: "Behavioural",
+      framework: ["Situation (context)", "Task (your role)", "Action (what you did & why)", "Result (outcome + numbers)", "Learning (what you'd do differently)"],
+      pool: [
+        "Tell me about a time you had to make a major product decision with incomplete data. What was the situation, what did you decide, and what happened?",
+        "Describe a time you had to push back on a feature request from a senior stakeholder. How did you handle it?",
+        "Tell me about a product you shipped that failed. What went wrong and what did you learn?",
+        "Describe a time you had to align a cross-functional team — engineering, design, and business — around a single priority. How did you do it?",
+        "Tell me about a time you used data to change your or your team's mind about something important."
+      ]
+    }
+  };
+
+  // Per-type queue to avoid repeats
+  const questionQueues = {};
+  function pickQuestion(key) {
+    if (!questionQueues[key] || questionQueues[key].length === 0) {
+      // Shuffle a fresh copy of the pool
+      const shuffled = [...questions[key].pool].sort(() => Math.random() - 0.5);
+      questionQueues[key] = shuffled;
+    }
+    return questionQueues[key].pop();
+  }
+
+  // Session state
+  const session = { attempts: 0, scores: [], best: null };
+
+  // DOM refs
+  const qtypeEl    = document.getElementById("qtype");
+  const cardEl     = document.getElementById("question-card");
+  const typeLabel  = document.getElementById("q-type-label");
+  const qTextEl    = document.getElementById("q-text");
+  const hintCard   = document.getElementById("hint-card");
+  const hintToggle = document.getElementById("hint-toggle");
+  const hintChev   = document.getElementById("hint-chevron");
+  const hintBody   = document.getElementById("hint-body");
+  const hintSteps  = document.getElementById("hint-steps");
+  const answerEl   = document.getElementById("answer");
+  const btnRow     = document.getElementById("btn-row");
+  const submitEl   = document.getElementById("submit");
+  const spinnerEl  = document.getElementById("spinner");
+  const feedbackEl = document.getElementById("feedback");
+  const errorEl    = document.getElementById("error-msg");
+  const tryAgainRow = document.getElementById("try-again-row");
+  const tryAgainBtn = document.getElementById("try-again");
+
+  // Hint toggle
+  hintToggle.addEventListener("click", () => {
+    hintBody.classList.toggle("open");
+    hintChev.classList.toggle("open");
+  });
+
+  // Track active question text for submit
+  let activeQuestionText = "";
+
+  // Question type change
+  qtypeEl.addEventListener("change", () => {
+    const key = qtypeEl.value;
+    feedbackEl.classList.remove("visible");
+    tryAgainRow.classList.remove("visible");
+    errorEl.classList.remove("visible");
+
+    if (!key) {
+      cardEl.classList.remove("visible");
+      hintCard.classList.remove("visible");
+      answerEl.classList.remove("visible");
+      btnRow.classList.remove("visible");
+      return;
+    }
+
+    const q = questions[key];
+    activeQuestionText = pickQuestion(key);
+    typeLabel.textContent = q.label;
+    qTextEl.textContent = activeQuestionText;
+
+    // Render framework steps
+    hintSteps.innerHTML = q.framework
+      .map((step, i) => `<div class="hint-step"><span class="hint-step-num">${i + 1}</span>${step}</div>`)
+      .join("");
+
+    cardEl.classList.add("visible");
+    hintCard.classList.add("visible");
+    // Open hint by default on first show
+    hintBody.classList.add("open");
+    hintChev.classList.add("open");
+
+    answerEl.classList.add("visible");
+    btnRow.classList.add("visible");
+    answerEl.value = "";
+    answerEl.focus();
+  });
+
+  // Try again
+  tryAgainBtn.addEventListener("click", () => {
+    feedbackEl.classList.remove("visible");
+    tryAgainRow.classList.remove("visible");
+    errorEl.classList.remove("visible");
+    answerEl.value = "";
+    answerEl.focus();
+    answerEl.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+
+  // Submit
+  submitEl.addEventListener("click", async () => {
+    const answer = answerEl.value.trim();
+    if (!answer) {
+      showError("Write your answer before asking for feedback.");
+      return;
+    }
+
+    const key = qtypeEl.value;
+    const question = activeQuestionText;
+    const qtype = questions[key].label;
+
+    setLoading(true);
+    errorEl.classList.remove("visible");
+    feedbackEl.classList.remove("visible");
+    tryAgainRow.classList.remove("visible");
+
+    const systemPrompt = `You are an expert PM interview coach who has coached candidates into top PM roles at Google, Meta, and Airbnb. You give honest, specific, and actionable feedback.
+
+When given a PM interview question and a candidate's answer, respond ONLY with a valid JSON object in this exact shape:
+
+{
+  "score": <integer 1–10>,
+  "well": "<what the candidate did well — 2–4 bullet points as HTML <ul><li> list>",
+  "missing": "<what was missing or weak — 2–4 bullet points as HTML <ul><li> list>",
+  "ideal": "<how a top PM would have answered this — write it as flowing prose, 3–5 sentences>"
+}
+
+Be specific, not generic. Reference what the candidate actually wrote. Do not include markdown fences or any text outside the JSON object.`;
+
+    const userMessage = `Question type: ${qtype}
+
+Question: ${question}
+
+Candidate's answer:
+${answer}`;
+
+    try {
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${GROQ_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          max_tokens: 1000,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userMessage }
+          ]
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error?.message || `API error ${res.status}`);
+      }
+
+      const data = await res.json();
+      const raw = data.choices?.[0]?.message?.content ?? "";
+      const clean = raw.replace(/```json|```/g, "").trim();
+      const parsed = JSON.parse(clean);
+
+      const score = parsed.score ?? null;
+
+      document.getElementById("score-display").textContent = score ?? "—";
+      document.getElementById("fb-well").innerHTML = parsed.well ?? "No feedback available.";
+      document.getElementById("fb-missing").innerHTML = parsed.missing ?? "No feedback available.";
+      document.getElementById("fb-ideal").innerHTML = parsed.ideal ?? "No feedback available.";
+
+      feedbackEl.classList.add("visible");
+      tryAgainRow.classList.add("visible");
+      feedbackEl.scrollIntoView({ behavior: "smooth", block: "start" });
+
+      // Update session
+      if (score !== null) {
+        session.attempts++;
+        session.scores.push(score);
+        if (session.best === null || score > session.best) session.best = score;
+        updateSessionBar();
+      }
+
+    } catch (err) {
+      showError("Error: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  });
+
+  function updateSessionBar() {
+    const avg = session.scores.reduce((a, b) => a + b, 0) / session.scores.length;
+
+    document.getElementById("stat-attempts").textContent = session.attempts;
+    document.getElementById("stat-avg").textContent = avg.toFixed(1);
+    document.getElementById("stat-best").textContent = session.best;
+
+    // Render dots (last 10)
+    const dotsEl = document.getElementById("session-dots");
+    const recent = session.scores.slice(-10);
+    dotsEl.innerHTML = recent.map(s => {
+      const cls = s >= 8 ? "filled high" : s >= 5 ? "filled" : "filled low";
+      return `<div class="dot ${cls}" title="Score: ${s}/10"></div>`;
+    }).join("");
+  }
+
+  function setLoading(on) {
+    submitEl.disabled = on;
+    spinnerEl.classList.toggle("active", on);
+    submitEl.childNodes[0].textContent = on ? "Analyzing… " : "Get Feedback";
+  }
+
+  function showError(msg) {
+    errorEl.textContent = msg;
+    errorEl.classList.add("visible");
+  }
+</script>
+</body>
+</html>
